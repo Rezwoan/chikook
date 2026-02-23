@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCookingStore } from './store/cookingStore';
 import { useTimerNotification } from './hooks/useTimerNotification';
 import { useTimer } from './hooks/useTimer';
+import { useTheme } from './hooks/useTheme';
 import ProgressBar from './components/ProgressBar';
 import StepList from './components/StepList';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -14,7 +15,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const resetAllSteps = useCookingStore((state) => state.resetAllSteps);
   const { permission, requestPermission, isSupported } = useTimerNotification();
-  
+  const { theme, toggleTheme } = useTheme();
+
   // Initialize timer hook to keep it running
   useTimer();
 
@@ -84,7 +86,7 @@ function App() {
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.3, ease: [0.2, 0, 0, 1] }}
             >
-              <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+              <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} theme={theme} onToggleTheme={toggleTheme} />
             </motion.div>
           </>
         )}

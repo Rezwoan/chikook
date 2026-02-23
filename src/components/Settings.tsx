@@ -1,15 +1,18 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Download, Bell, BellOff, RotateCcw, Check } from 'lucide-react';
+import { X, Volume2, VolumeX, Download, Bell, BellOff, RotateCcw, Check, Sun, Moon } from 'lucide-react';
 import { useCookingStore } from '../store/cookingStore';
 import { useTimerNotification } from '../hooks/useTimerNotification';
+import type { Theme } from '../hooks/useTheme';
 
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, theme, onToggleTheme }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -62,6 +65,34 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
         </motion.button>
       </div>
 
+      {/* ── Appearance (Theme) ── */}
+      <div className="settings-section">
+        <div className="section-header">
+          {theme === 'dark' ? <Moon /> : <Sun />}
+          <h3>Appearance</h3>
+        </div>
+        <p className="section-description">Choose your preferred color scheme</p>
+        <div className="theme-selector">
+          <button
+            className={`theme-option${theme === 'light' ? ' active' : ''}`}
+            onClick={() => theme !== 'light' && onToggleTheme()}
+            aria-label="Light theme"
+          >
+            <Sun style={{ width: 18, height: 18 }} />
+            <span>Light</span>
+          </button>
+          <button
+            className={`theme-option${theme === 'dark' ? ' active' : ''}`}
+            onClick={() => theme !== 'dark' && onToggleTheme()}
+            aria-label="Dark theme"
+          >
+            <Moon style={{ width: 18, height: 18 }} />
+            <span>Dark</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Sound ── */}
       <div className="settings-section">
         <div className="section-header">
           {soundEnabled ? <Volume2 /> : <VolumeX />}
