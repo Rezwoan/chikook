@@ -523,6 +523,40 @@ body {
   border-radius: var(--md-shape-lg);
   border: 1px solid var(--md-outline-variant);
 
+  .timer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .timer-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      color: var(--md-on-surface-variant);
+      flex-shrink: 0;
+    }
+
+    span {
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.031em;
+      text-transform: uppercase;
+      color: var(--md-on-surface-variant);
+    }
+
+    &.running svg {
+      color: var(--md-primary);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+
   .timer-value {
     font-family: 'Roboto Mono', 'Roboto', monospace;
     font-size: 3rem;
@@ -534,6 +568,21 @@ body {
     line-height: 1;
     padding: 0.5rem 0;
   }
+
+  .timer-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--md-outline-variant);
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 0.875rem;
+  }
+
+  .timer-progress-bar {
+    height: 100%;
+    background: var(--md-primary);
+    border-radius: 9999px;
+  }
 }
 
 //  Timer alarm state 
@@ -542,82 +591,125 @@ body {
   border-color: var(--md-error);
 
   .timer-value { color: var(--md-on-error-container); }
+
+  .alarm-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  .alarm-icon {
+    width: 44px;
+    height: 44px;
+    color: var(--md-on-error-container);
+    flex-shrink: 0;
+  }
+
+  .alarm-text { text-align: center; }
+
+  .alarm-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.375rem;
+    font-weight: 400;
+    color: var(--md-on-error-container);
+    margin-bottom: 0.25rem;
+  }
+
+  .alarm-subtitle {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.031em;
+    color: var(--md-on-error-container);
+    opacity: 0.72;
+  }
 }
 
 // 
-// M3 ICON BUTTONS  Timer Controls
+// M3 ICON BUTTONS  reusable (timer controls + alarm stop)
 // 
+.icon-btn {
+  position: relative;
+  overflow: hidden;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-shape-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: box-shadow var(--md-duration-short3) var(--md-motion-standard),
+              background var(--md-duration-short3) var(--md-motion-standard);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--md-duration-short3) var(--md-motion-standard);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  &:hover::after { opacity: 0.08; }
+  &:active::after { opacity: 0.12; }
+  &:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+
+  svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+
+  // M3 Filled Tonal  primary action (Play)
+  &.primary {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    width: 56px;
+    height: 56px;
+    &::after { background: var(--md-on-primary-container); }
+    svg { width: 24px; height: 24px; }
+    &:hover { box-shadow: var(--md-elevation-2); }
+  }
+
+  // M3 Standard Icon Button  secondary (Pause, Reset)
+  &.standard {
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    &::after { background: var(--md-on-surface-variant); }
+    &:hover { background: color-mix(in srgb, var(--md-on-surface-variant) 8%, transparent); }
+  }
+
+  // Stop Alarm  M3 Filled  error
+  &.alarm-stop {
+    background: var(--md-error);
+    color: var(--md-on-error);
+    width: auto;
+    height: 40px;
+    border-radius: var(--md-shape-full);
+    padding: 0 1.25rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.007em;
+    gap: 0.375rem;
+    &::after { background: var(--md-on-error); }
+    &:hover { box-shadow: var(--md-elevation-2); }
+    svg { width: 18px; height: 18px; }
+  }
+}
+
+// Timer Controls  flex row container
 .timer-controls {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
+}
 
-  .icon-btn {
-    position: relative;
-    overflow: hidden;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--md-shape-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    transition: box-shadow var(--md-duration-short3) var(--md-motion-standard),
-                background var(--md-duration-short3) var(--md-motion-standard);
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity var(--md-duration-short3) var(--md-motion-standard);
-      pointer-events: none;
-      border-radius: inherit;
-    }
-    &:hover::after { opacity: 0.08; }
-    &:active::after { opacity: 0.12; }
-    &:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
-
-    svg { width: 20px; height: 20px; position: relative; z-index: 1; }
-
-    // M3 Filled Tonal  primary action (Play)
-    &.primary {
-      background: var(--md-primary-container);
-      color: var(--md-on-primary-container);
-      width: 56px;
-      height: 56px;
-      &::after { background: var(--md-on-primary-container); }
-      svg { width: 24px; height: 24px; }
-      &:hover { box-shadow: var(--md-elevation-2); }
-    }
-
-    // M3 Standard Icon Button  secondary (Pause, Reset)
-    &.standard {
-      background: transparent;
-      color: var(--md-on-surface-variant);
-      &::after { background: var(--md-on-surface-variant); }
-      &:hover { background: color-mix(in srgb, var(--md-on-surface-variant) 8%, transparent); }
-    }
-
-    // Stop Alarm  M3 Filled  error
-    &.alarm-stop {
-      background: var(--md-error-container);
-      color: var(--md-on-error-container);
-      width: auto;
-      border-radius: var(--md-shape-full);
-      padding: 0 1.25rem;
-      font-family: 'Roboto', sans-serif;
-      font-size: 0.875rem;
-      font-weight: 500;
-      letter-spacing: 0.007em;
-      gap: 0.375rem;
-      &::after { background: var(--md-on-error-container); }
-      &:hover { box-shadow: var(--md-elevation-1); }
-    }
-  }
+// When timer-controls sits inside the header row, remove top margin + re-align
+.timer-header .timer-controls {
+  margin-top: 0;
+  justify-content: flex-end;
 }
 
 // 
@@ -981,6 +1073,15 @@ body {
   .back-btn { padding: 0 0.625rem; min-width: 36px; justify-content: center; }
 
   .app-header .logo-section .logo-text h1 { font-size: 1.125rem; }
+
+  // Timer — compact on small screens
+  .timer-display {
+    padding: 0.75rem;
+
+    .timer-value { font-size: 2.5rem; }
+  }
+
+  .icon-btn.primary { width: 48px; height: 48px; }
 }
 
 @media (min-width: 900px) {
