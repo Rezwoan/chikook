@@ -7,6 +7,7 @@ interface TimerState {
   stepId: number | null;
   remainingTime: number; // in seconds
   isRunning: boolean;
+  isAlarming: boolean; // true when countdown hits 0 and waiting for user to dismiss
   startTime: number | null; // timestamp when timer started
   duration: number; // original duration in seconds
 }
@@ -18,6 +19,10 @@ interface CookingStore {
   
   // Actions
   toggleStep: (stepId: number) => void;
+  /** Called by useTimer when countdown hits 0 — starts alarm, waits for user to dismiss */
+  triggerAlarm: () => void;
+  /** Called when user clicks "Stop Alarm" — marks step done, chains next timer if any */
+  dismissAlarm: (stepId: number) => void;
   canCompleteStep: (stepId: number) => boolean;
   startTimer: (stepId: number, duration: number) => void;
   pauseTimer: () => void;
@@ -37,6 +42,7 @@ export const useCookingStore = create<CookingStore>()(
         stepId: null,
         remainingTime: 0,
         isRunning: false,
+        isAlarming: false,
         startTime: null,
         duration: 0,
       },
@@ -58,39 +64,99 @@ export const useCookingStore = create<CookingStore>()(
 
       toggleStep: (stepId: number) => {
         set((state) => {
-          // Check if step can be completed
-          if (!state.canCompleteStep(stepId)) {
-            return state; // Don't allow toggling if prerequisites not met
-          }
+          if (!state.canCompleteStep(stepId)) return state;
 
           const updatedSteps = state.steps.map((step) =>
             step.id === stepId ? { ...step, completed: !step.completed } : step
           );
 
-          // Find the step that was just toggled
-          const toggledStep = updatedSteps.find((s) => s.id === stepId);
-          
-          // Calculate current step index
-          const completedSteps = updatedSteps.filter(s => s.completed);
-          const newCurrentStepIndex = completedSteps.length;
-          
-          // If step has a timer and was just checked (marked as completed)
-          if (toggledStep && toggledStep.completed && toggledStep.timerDuration) {
-            // Start the timer automatically
+          const toggledStep = updatedSteps.find((s) => s.id === stepId)!;
+          const completedCount = updatedSteps.filter((s) => s.completed).length;
+          const stepIndex = updatedSteps.findIndex((s) => s.id === stepId);
+          const nextStep = updatedSteps[stepIndex + 1];
+
+          if (toggledStep.completed) {
+            // If the very next step has a timer, auto-start it
+            if (nextStep?.timerDuration && !nextStep.completed) {
+              return {
+                steps: updatedSteps,
+                currentStepIndex: completedCount,
+                timer: {
+                  stepId: nextStep.id,
+                  remainingTime: nextStep.timerDuration,
+                  isRunning: true,
+                  isAlarming: false,
+                  startTime: Date.now(),
+                  duration: nextStep.timerDuration,
+                },
+              };
+            }
+            // Otherwise clear any stale timer
             return {
               steps: updatedSteps,
-              currentStepIndex: newCurrentStepIndex,
+              currentStepIndex: completedCount,
+              timer: { stepId: null, remainingTime: 0, isRunning: false, isAlarming: false, startTime: null, duration: 0 },
+            };
+          }
+
+          // Un-completing: stop the timer if it was running for this or a later step
+          const shouldResetTimer =
+            state.timer.stepId !== null && state.timer.stepId >= stepId;
+          return {
+            steps: updatedSteps,
+            currentStepIndex: completedCount,
+            ...(shouldResetTimer
+              ? { timer: { stepId: null, remainingTime: 0, isRunning: false, isAlarming: false, startTime: null, duration: 0 } }
+              : {}),
+          };
+        });
+      },
+
+      // Called by useTimer when countdown hits zero — rings alarm, waits for user to dismiss
+      triggerAlarm: () => {
+        set((state) => ({
+          timer: {
+            ...state.timer,
+            isRunning: false,
+            isAlarming: true,
+          },
+        }));
+      },
+
+      // Called when user clicks "Stop Alarm" — marks step done, chains next timer
+      dismissAlarm: (stepId: number) => {
+        set((state) => {
+          const step = state.steps.find((s) => s.id === stepId);
+          if (!step) return state;
+
+          const updatedSteps = state.steps.map((s) =>
+            s.id === stepId ? { ...s, completed: true } : s
+          );
+          const completedCount = updatedSteps.filter((s) => s.completed).length;
+          const stepIndex = updatedSteps.findIndex((s) => s.id === stepId);
+          const nextStep = updatedSteps[stepIndex + 1];
+
+          // If the step after the timer-step ALSO has a timer, auto-start it
+          if (nextStep?.timerDuration && !nextStep.completed) {
+            return {
+              steps: updatedSteps,
+              currentStepIndex: completedCount,
               timer: {
-                stepId: stepId,
-                remainingTime: toggledStep.timerDuration,
+                stepId: nextStep.id,
+                remainingTime: nextStep.timerDuration,
                 isRunning: true,
+                isAlarming: false,
                 startTime: Date.now(),
-                duration: toggledStep.timerDuration,
+                duration: nextStep.timerDuration,
               },
             };
           }
 
-          return { steps: updatedSteps, currentStepIndex: newCurrentStepIndex };
+          return {
+            steps: updatedSteps,
+            currentStepIndex: completedCount,
+            timer: { stepId: null, remainingTime: 0, isRunning: false, isAlarming: false, startTime: null, duration: 0 },
+          };
         });
       },
 
@@ -100,6 +166,7 @@ export const useCookingStore = create<CookingStore>()(
             stepId,
             remainingTime: duration,
             isRunning: true,
+            isAlarming: false,
             startTime: Date.now(),
             duration,
           },
@@ -141,6 +208,7 @@ export const useCookingStore = create<CookingStore>()(
             stepId: null,
             remainingTime: 0,
             isRunning: false,
+            isAlarming: false,
             startTime: null,
             duration: 0,
           },
@@ -155,6 +223,7 @@ export const useCookingStore = create<CookingStore>()(
             stepId: null,
             remainingTime: 0,
             isRunning: false,
+            isAlarming: false,
             startTime: null,
             duration: 0,
           },

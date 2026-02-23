@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { gsap } from 'gsap';
 import { useCookingStore } from './store/cookingStore';
 import { useTimerNotification } from './hooks/useTimerNotification';
 import { useTimer } from './hooks/useTimer';
@@ -13,7 +12,6 @@ import './styles/main.scss';
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
   const resetAllSteps = useCookingStore((state) => state.resetAllSteps);
   const { permission, requestPermission, isSupported } = useTimerNotification();
   
@@ -26,15 +24,7 @@ function App() {
       requestPermission();
     }
 
-    // GSAP animation for header on mount
-    if (headerRef.current) {
-      gsap.from(headerRef.current, {
-        y: -60,
-        duration: 0.6,
-        ease: 'power3.out',
-        clearProps: 'transform',
-      });
-    }
+    // GSAP animation removed - was causing header to stick at y:-60
   }, [isSupported, permission, requestPermission]);
 
   const handleReset = () => {
@@ -48,12 +38,10 @@ function App() {
       <OfflineIndicator />
       
       {/* Mobile-First Header */}
-      <header ref={headerRef} className="app-header">
+      <header className="app-header">
         <div className="header-content">
           {/* Logo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
             className="logo-section"
           >
             <div className="logo-emoji">🍗</div>
@@ -102,14 +90,10 @@ function App() {
 
       {/* Main Content - Mobile Optimized */}
       <main>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div>
           <ProgressBar />
           <StepList />
-        </motion.div>
+        </div>
       </main>
     </div>
   );

@@ -1,50 +1,133 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTimer } from '../../hooks/useTimer';
+import { useCookingStore } from '../../store/cookingStore';
+import { stopAlarm } from '../../utils/alarm';
 import TimerControls from './TimerControls';
-import { Clock } from 'lucide-react';
+import { Clock, AlarmClock } from 'lucide-react';
 
 const TimerDisplay: React.FC = () => {
-  const { remainingTime, isRunning, formatTime } = useTimer();
+  const { remainingTime, isRunning, isAlarming, stepId, duration, formatTime } = useTimer();
+  const dismissAlarm = useCookingStore((state) => state.dismissAlarm);
 
+  const percentage = duration > 0 ? (remainingTime / duration) * 100 : 0;
   const totalSeconds = Math.ceil(remainingTime);
-  const percentage = remainingTime > 0 ? (remainingTime / useTimer().duration) * 100 : 0;
+
+  const handleStopAlarm = () => {
+    stopAlarm();
+    if (stepId !== null) {
+      dismissAlarm(stepId);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-lg p-4 border-2 border-accent shadow-lg">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-accent animate-pulse" />
-          <span className="text-sm font-semibold text-text-light">Timer Active</span>
+    <div className="timer-display" style={{ position: 'relative', overflow: 'hidden' }}>
+      <AnimatePresence>
+        {isAlarming && (
+          <motion.div
+            key="alarm-overlay"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 10,
+              background: 'var(--color-bg-card)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: '1rem', padding: '1.25rem',
+              borderRadius: 'inherit',
+            }}
+          >
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], rotate: [-10, 10, -10, 10, 0] }}
+              transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <AlarmClock style={{ width: 48, height: 48, color: 'var(--color-primary)' }} />
+            </motion.div>
+
+            <div style={{ textAlign: 'center' }}>
+              <p style={{
+                fontFamily: 'Alumni Sans SC, sans-serif',
+                fontSize: '1.25rem', fontWeight: 700,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '0.05em', marginBottom: '0.25rem',
+              }}>
+                Time's Up!
+              </p>
+              <p style={{ fontSize: '0.813rem', color: 'var(--color-text-muted)' }}>
+                Stop the alarm to mark this step done
+              </p>
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStopAlarm}
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-bg-primary)',
+                border: 'none', borderRadius: '999px',
+                padding: '0.75rem 2rem',
+                fontFamily: 'Alumni Sans SC, sans-serif',
+                fontSize: '1.063rem', fontWeight: 700,
+                letterSpacing: '0.08em', cursor: 'pointer',
+                boxShadow: '0 0 0 4px color-mix(in srgb, var(--color-primary) 30%, transparent)',
+              }}
+            >
+              Stop Alarm
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Clock
+            style={{
+              width: '20px',
+              height: '20px',
+              color: 'var(--color-primary)',
+              animation: isRunning ? 'pulse 1.5s ease-in-out infinite' : 'none',
+            }}
+          />
+          <span style={{ fontSize: '0.813rem', fontWeight: 700, color: 'var(--color-text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Timer Active
+          </span>
         </div>
         <TimerControls />
       </div>
 
-      {/* Timer Display */}
-      <div className="text-center mb-3">
-        <motion.div
-          key={totalSeconds}
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          className="text-5xl font-bold text-primary font-display"
-        >
-          {formatTime(remainingTime)}
-        </motion.div>
-      </div>
+      {/* Big time display */}
+      <motion.div
+        key={totalSeconds}
+        initial={{ scale: 1.05 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.1 }}
+        className="timer-value"
+      >
+        {formatTime(remainingTime)}
+      </motion.div>
 
-      {/* Progress Bar */}
-      <div className="relative w-full h-2 bg-border rounded-full overflow-hidden">
+      {/* Progress bar */}
+      <div style={{
+        width: '100%', height: '6px', background: 'var(--color-bg-primary)',
+        borderRadius: '999px', overflow: 'hidden', margin: '0.75rem 0 0.5rem',
+      }}>
         <motion.div
-          className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-secondary rounded-full"
-          initial={{ width: '100%' }}
+          style={{
+            height: '100%',
+            background: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary))',
+            borderRadius: '999px',
+          }}
           animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.25 }}
         />
       </div>
 
       {isRunning && (
-        <p className="text-xs text-center text-text-light mt-2">
-          Keep cooking! Timer is running...
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+          Keep cooking! Timer is running…
         </p>
       )}
     </div>
@@ -52,3 +135,4 @@ const TimerDisplay: React.FC = () => {
 };
 
 export default TimerDisplay;
+

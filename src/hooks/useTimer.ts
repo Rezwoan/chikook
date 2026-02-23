@@ -1,81 +1,81 @@
 import { useEffect, useRef } from 'react';
 import { useCookingStore } from '../store/cookingStore';
+import { startAlarm, stopAlarm } from '../utils/alarm';
 
 export const useTimer = () => {
-  const { timer, updateTimerRemaining, resetTimer, setTimerRunning } = useCookingStore();
-  const animationFrameRef = useRef<number | undefined>(undefined);
-  const lastUpdateRef = useRef<number>(Date.now());
+  const timer = useCookingStore((state) => state.timer);
+  const updateTimerRemaining = useCookingStore((state) => state.updateTimerRemaining);
+  const triggerAlarm = useCookingStore((state) => state.triggerAlarm);
 
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Wall-clock end time — stays accurate across re-renders and tab switches
+  const endTimeRef = useRef<number>(0);
+
+  // Countdown tick
   useEffect(() => {
-    if (!timer.isRunning || timer.remainingTime <= 0) {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      return;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
 
-    const updateTimer = () => {
-      const now = Date.now();
-      const elapsed = (now - lastUpdateRef.current) / 1000; // Convert to seconds
-      lastUpdateRef.current = now;
+    if (!timer.isRunning || timer.remainingTime <= 0) return;
 
-      const newRemaining = Math.max(0, timer.remainingTime - elapsed);
-      updateTimerRemaining(newRemaining);
+    // Anchor end time to wall clock
+    endTimeRef.current = Date.now() + timer.remainingTime * 1000;
 
-      if (newRemaining > 0) {
-        animationFrameRef.current = requestAnimationFrame(updateTimer);
-      } else {
-        // Timer completed
-        setTimerRunning(false);
-        
-        // Trigger completion events (notifications, sound, vibration)
+    intervalRef.current = setInterval(() => {
+      const remaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
+      updateTimerRemaining(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(intervalRef.current!);
+        intervalRef.current = null;
+
+        // Trigger alarm — do NOT auto-complete; user must click "Stop Alarm"
+        triggerAlarm();
+        startAlarm();
+
+        // Optional system notification
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('Timer Complete!', {
-            body: 'Your cooking step is done.',
+          new Notification('⏰ Timer Done!', {
+            body: 'Tap "Stop Alarm" to mark the step complete.',
             icon: '/icons/icon-192x192.png',
-            badge: '/icons/icon-192x192.png',
           });
         }
-
-        // Play sound
-        const audio = new Audio('/sounds/notification.mp3');
-        audio.play().catch(() => {
-          // Autoplay might be blocked
-        });
-
-        // Vibrate on mobile
-        if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 200]);
-        }
       }
-    };
-
-    lastUpdateRef.current = Date.now();
-    animationFrameRef.current = requestAnimationFrame(updateTimer);
+    }, 250);
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [timer.isRunning, timer.remainingTime, updateTimerRemaining, resetTimer, setTimerRunning]);
+  // NOT on remainingTime — that's what made the old version slow
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.isRunning, timer.stepId, timer.duration]);
 
-  // Handle page visibility changes (tab switching)
+  // If the app reloads while the alarm was persisted as ringing, restart audio
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Tab is hidden, timer logic will pause naturally
-      } else {
-        // Tab is visible again, reset last update time
-        lastUpdateRef.current = Date.now();
+    if (timer.isAlarming) {
+      startAlarm();
+    } else {
+      stopAlarm();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.isAlarming]);
+
+  // Handle tab visibility — recalculate remaining from wall clock
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!document.hidden && timer.isRunning && endTimeRef.current > 0) {
+        const remaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
+        updateTimerRemaining(remaining);
       }
     };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [timer.isRunning, updateTimerRemaining]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -83,8 +83,5 @@ export const useTimer = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  return {
-    ...timer,
-    formatTime,
-  };
+  return { ...timer, formatTime };
 };
