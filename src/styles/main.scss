@@ -178,7 +178,7 @@ body {
 .app-container {
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden; // only block horizontal scroll — overflow:hidden kills position:sticky on children
 }
 
 // No background pattern - clean solid background
@@ -214,12 +214,16 @@ body {
 
     .progress-bar-container {
       height: 5px;
-      border-radius: 0; // flush to header bottom edge
+      border-radius: 0;
+      margin-bottom: 0; // bar is the very last element
     }
 
     // hide encouragement texts inside the header
     p, div[style*="color: var(--color-success)"] { display: none; }
   }
+
+  // gap between the progress bar strip and the header bottom border
+  padding-bottom: 0.5rem;
   
   .header-content {
     max-width: 900px;
