@@ -33,12 +33,15 @@ const TimerDisplay: React.FC = () => {
           transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
         >
           <div className="alarm-body">
-            <motion.div
-              animate={{ rotate: [-15, 15, -15, 15, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-            >
-              <AlarmClock className="alarm-icon" />
-            </motion.div>
+            <div className="alarm-icon-wrapper">
+              <motion.div
+                style={{ transformOrigin: 'center bottom' }}
+                animate={{ rotate: [-14, 14, -10, 10, -6, 6, 0] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1.2 }}
+              >
+                <AlarmClock className="alarm-icon" />
+              </motion.div>
+            </div>
 
             <div className="alarm-text">
               <p className="alarm-title">Time's up!</p>
