@@ -4,7 +4,6 @@ import { gsap } from 'gsap';
 import { useCookingStore } from './store/cookingStore';
 import { useTimerNotification } from './hooks/useTimerNotification';
 import { useTimer } from './hooks/useTimer';
-import { useThreeBackground } from './hooks/useThreeBackground';
 import ProgressBar from './components/ProgressBar';
 import StepList from './components/StepList';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -18,9 +17,6 @@ function App() {
   const resetAllSteps = useCookingStore((state) => state.resetAllSteps);
   const { permission, requestPermission, isSupported } = useTimerNotification();
   
-  // Initialize Three.js background
-  const threeCanvasRef = useThreeBackground();
-  
   // Initialize timer hook to keep it running
   useTimer();
 
@@ -33,10 +29,10 @@ function App() {
     // GSAP animation for header on mount
     if (headerRef.current) {
       gsap.from(headerRef.current, {
-        y: -100,
-        opacity: 0,
-        duration: 0.8,
+        y: -60,
+        duration: 0.6,
         ease: 'power3.out',
+        clearProps: 'transform',
       });
     }
   }, [isSupported, permission, requestPermission]);
@@ -49,9 +45,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Three.js animated background */}
-      <canvas ref={threeCanvasRef} id="three-canvas" />
-      
       <OfflineIndicator />
       
       {/* Mobile-First Header */}
@@ -77,7 +70,8 @@ function App() {
             className="settings-btn"
             aria-label="Settings"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <SettingsIcon className="w-6 h-6" />
+            <span>Settings</span>
           </motion.button>
         </div>
       </header>

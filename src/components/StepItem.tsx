@@ -11,7 +11,7 @@ interface StepItemProps {
   index: number;
 }
 
-const getStepIcon = (iconType: string, isLocked: boolean) => {
+const getStepIcon = (iconType: string) => {
   const iconMap: Record<string, string> = {
     'flame': '🔥',
     'spice': '🧂',
@@ -32,7 +32,7 @@ const getStepIcon = (iconType: string, isLocked: boolean) => {
   };
   
   return (
-    <span className="step-icon" role="img" aria-label={iconType} style={{ opacity: isLocked ? 0.5 : 1, filter: isLocked ? 'grayscale(100%)' : 'none' }}>
+    <span className="step-icon" role="img" aria-label={iconType}>
       {iconMap[iconType] || '👨‍🍳'}
     </span>
   );
@@ -48,11 +48,11 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
   useEffect(() => {
     if (cardRef.current) {
       gsap.from(cardRef.current, {
-        opacity: 0,
-        y: 30,
-        duration: 0.5,
-        delay: index * 0.08,
+        y: 20,
+        duration: 0.4,
+        delay: index * 0.05,
         ease: 'power2.out',
+        clearProps: 'transform',
       });
     }
   }, [index]);
@@ -107,7 +107,7 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
         {/* Step Header */}
         <div className="step-header">
           <span className="step-badge">STEP {step.id}</span>
-          {getStepIcon(step.iconType, isLocked)}
+          {getStepIcon(step.iconType)}
           {step.timerDuration && !step.completed && (
             <div className="timer-badge">
               <Clock className="w-4 h-4" />
