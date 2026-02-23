@@ -91,26 +91,6 @@ const RecipeImport: React.FC<RecipeImportProps> = ({ onClose, onImported }) => {
     return () => clearTimeout(id);
   }, [json]);
 
-  const handleParse = () => {
-    try {
-      const parsed = JSON.parse(json);
-      const result = validateRecipe(parsed);
-      if (result.ok) {
-        setStatus('valid');
-        setPreview(result.recipe);
-        setErrorMsg('');
-      } else {
-        setStatus('error');
-        setErrorMsg(result.error);
-        setPreview(null);
-      }
-    } catch (e) {
-      setStatus('error');
-      setErrorMsg('Invalid JSON — check for missing commas, brackets, or quotes.');
-      setPreview(null);
-    }
-  };
-
   const handleImport = () => {
     if (!preview) return;
     importRecipe(preview);

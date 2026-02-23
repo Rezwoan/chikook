@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCookingStore } from './store/cookingStore';
 import { useRecipeStore } from './store/recipeStore';
 import { useTimerNotification } from './hooks/useTimerNotification';
 import { useTimer } from './hooks/useTimer';
