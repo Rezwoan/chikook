@@ -37,7 +37,7 @@ function App() {
     <div className="app-container">
       <OfflineIndicator />
       
-      {/* Mobile-First Header */}
+      {/* Mobile-First Header — sticky, contains progress bar */}
       <header className="app-header">
         <div className="header-content">
           {/* Logo */}
@@ -62,6 +62,7 @@ function App() {
             <span>Settings</span>
           </motion.button>
         </div>
+        <ProgressBar />
       </header>
 
       {/* Settings Panel with overlay */}
@@ -91,7 +92,6 @@ function App() {
       {/* Main Content - Mobile Optimized */}
       <main>
         <div>
-          <ProgressBar />
           <StepList />
         </div>
       </main>

@@ -133,8 +133,8 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
           </motion.div>
         )}
 
-        {/* Active Timer Display */}
-        {isActiveTimer && timer.isRunning && (
+        {/* Active Timer Display — show when running OR alarming */}
+        {isActiveTimer && (timer.isRunning || timer.isAlarming) && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

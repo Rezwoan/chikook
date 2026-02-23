@@ -190,7 +190,35 @@ body {
   background: var(--color-bg-card);
   border-bottom: 2px solid var(--color-border);
   box-shadow: var(--shadow-card);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md) 0;
+
+  // Compact progress bar strip at the bottom of the header
+  .progress-section {
+    padding: 0.5rem 0 0;
+    margin: 0;
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.35rem;
+
+      h2 { display: none; } // heading hidden in compact mode
+
+      .progress-count {
+        font-size: 0.688rem;
+        color: var(--color-text-muted);
+      }
+    }
+
+    .progress-bar-container {
+      height: 5px;
+      border-radius: 0; // flush to header bottom edge
+    }
+
+    // hide encouragement texts inside the header
+    p, div[style*="color: var(--color-success)"] { display: none; }
+  }
   
   .header-content {
     max-width: 900px;
