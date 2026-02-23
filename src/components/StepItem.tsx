@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import type { CookingStep } from '../data/cookingSteps';
 import { useCookingStore } from '../store/cookingStore';
@@ -11,31 +11,11 @@ interface StepItemProps {
   index: number;
 }
 
-const getStepIcon = (iconType: string) => {
-  const iconMap: Record<string, string> = {
-    'flame': '🔥',
-    'spice': '🧂',
-    'potato': '🥔',
-    'onion': '🧅',
-    'spices': '🌶️',
-    'ginger': '🫚',
-    'chicken': '🍗',
-    'spice-mix': '🌿',
-    'timer': '⏲️',
-    'pot-lid': '🍲',
-    'spice-powder': '✨',
-    'cook': '🔥',
-    'add': '➕',
-    'water': '💧',
-    'simmer': '♨️',
-    'finish': '✅',
-  };
-  
-  return (
-    <span className="step-icon" role="img" aria-label={iconType}>
-      {iconMap[iconType] || '👨‍🍳'}
-    </span>
-  );
+const iconMap: Record<string, string> = {
+  flame: '🔥', spice: '🧂', potato: '🥔', onion: '🧅',
+  spices: '🌶️', ginger: '🫚', chicken: '🍗', 'spice-mix': '🌿',
+  timer: '⏲️', 'pot-lid': '🍲', 'spice-powder': '✨', cook: '🔥',
+  add: '➕', water: '💧', simmer: '♨️', finish: '✅',
 };
 
 const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
@@ -45,105 +25,120 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
   const canComplete = canCompleteStep(step.id);
   const isLocked = !canComplete && !step.completed;
 
+  // M3 entrance: slide up + fade
   useEffect(() => {
     if (cardRef.current) {
-      gsap.from(cardRef.current, {
-        y: 20,
-        duration: 0.4,
-        delay: index * 0.05,
-        ease: 'power2.out',
-        clearProps: 'transform',
-      });
+      gsap.fromTo(
+        cardRef.current,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, delay: index * 0.04, ease: 'power2.out', clearProps: 'transform,opacity' }
+      );
     }
   }, [index]);
 
   const handleToggle = () => {
     if (canComplete || step.completed) {
       toggleStep(step.id);
-      
-      // GSAP celebration animation on completion
       if (!step.completed && cardRef.current) {
         gsap.to(cardRef.current, {
-          scale: 1.05,
-          duration: 0.2,
-          yoyo: true,
-          repeat: 1,
-          ease: 'power2.inOut',
+          scale: 1.03, duration: 0.15,
+          yoyo: true, repeat: 1, ease: 'power2.inOut',
         });
       }
     }
   };
 
-  const stepClasses = `step-card ${step.completed ? 'completed' : ''} ${isLocked ? 'locked' : ''} ${isActiveTimer ? 'active' : ''}`;
-  const checkboxClasses = `step-checkbox ${step.completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`;
+  const cardClass = [
+    'step-card',
+    step.completed ? 'completed' : '',
+    isLocked ? 'locked' : '',
+    isActiveTimer ? 'active' : '',
+  ].filter(Boolean).join(' ');
+
+  const checkboxClass = [
+    'step-checkbox',
+    step.completed ? 'completed' : '',
+    isLocked ? 'locked' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div ref={cardRef} className={stepClasses}>
-      {/* Checkbox/Lock Icon */}
+    <div ref={cardRef} className={cardClass}>
+      {/* M3 Checkbox */}
       <motion.button
-        whileTap={{ scale: isLocked ? 1 : 0.95 }}
+        whileTap={{ scale: isLocked ? 1 : 0.92 }}
         onClick={handleToggle}
         disabled={isLocked && !step.completed}
-        className={checkboxClasses}
-        aria-label={step.completed ? 'Mark as incomplete' : isLocked ? 'Locked' : 'Mark as complete'}
+        className={checkboxClass}
+        aria-label={step.completed ? 'Mark as incomplete' : isLocked ? 'Locked — complete previous step first' : 'Mark as complete'}
       >
         {step.completed ? (
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
+            initial={{ scale: 0, rotate: -90 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 18 }}
           >
-            <Check className="w-7 h-7" strokeWidth={3} />
+            <Check strokeWidth={2.5} style={{ width: 20, height: 20 }} />
           </motion.div>
         ) : isLocked ? (
-          <Lock className="w-6 h-6" />
-        ) : (
-          <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid var(--color-primary)' }} />
-        )}
+          <Lock style={{ width: 16, height: 16 }} />
+        ) : null}
       </motion.button>
 
-      {/* Content */}
+      {/* M3 Card Content */}
       <div className="step-content">
-        {/* Step Header */}
         <div className="step-header">
-          <span className="step-badge">STEP {step.id}</span>
-          {getStepIcon(step.iconType)}
+          {/* M3 Assist chip — step number */}
+          <span className="step-badge">Step {step.id}</span>
+
+          {/* Emoji Icon */}
+          <span className="step-icon" role="img" aria-label={step.iconType}>
+            {iconMap[step.iconType] ?? '👨‍🍳'}
+          </span>
+
+          {/* M3 Suggestion chip — timer duration */}
           {step.timerDuration && !step.completed && (
             <div className="timer-badge">
-              <Clock className="w-4 h-4" />
+              <Clock style={{ width: 11, height: 11 }} />
               <span>{Math.floor(step.timerDuration / 60)}m</span>
             </div>
           )}
         </div>
 
-        {/* Description */}
-        <p className={`step-description ${step.completed ? 'completed' : ''}`}>
+        {/* Body Medium */}
+        <p className={`step-description${step.completed ? ' completed' : ''}`}>
           {step.description}
         </p>
 
-        {/* Lock Message */}
-        {isLocked && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="lock-message"
-          >
-            <Lock className="w-3 h-3" />
-            <span>Complete previous step first</span>
-          </motion.div>
-        )}
+        {/* Lock hint */}
+        <AnimatePresence>
+          {isLocked && (
+            <motion.div
+              key="lock"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="lock-message"
+            >
+              <Lock style={{ width: 11, height: 11 }} />
+              <span>Complete previous step first</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Active Timer Display — show when running OR alarming */}
-        {isActiveTimer && (timer.isRunning || timer.isAlarming) && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            style={{ marginTop: '1rem' }}
-          >
-            <TimerDisplay />
-          </motion.div>
-        )}
+        {/* Inline timer panel */}
+        <AnimatePresence>
+          {isActiveTimer && (timer.isRunning || timer.isAlarming) && (
+            <motion.div
+              key="timer"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+            >
+              <TimerDisplay />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

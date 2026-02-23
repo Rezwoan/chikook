@@ -78,10 +78,11 @@ function App() {
               onClick={() => setShowSettings(false)}
             />
             <motion.div
+              style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '100%', maxWidth: 360, zIndex: 1001 }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              transition={{ type: 'tween', duration: 0.3, ease: [0.2, 0, 0, 1] }}
             >
               <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
             </motion.div>

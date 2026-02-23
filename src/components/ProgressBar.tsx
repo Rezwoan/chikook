@@ -1,57 +1,54 @@
-import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { gsap } from 'gsap';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCookingStore } from '../store/cookingStore';
 
 const ProgressBar: React.FC = () => {
   const steps = useCookingStore((state) => state.steps);
-  const progressRef = useRef<HTMLDivElement>(null);
-  
-  const completedCount = steps.filter((step) => step.completed).length;
-  const totalCount = steps.length;
-  const percentage = (completedCount / totalCount) * 100;
 
-  useEffect(() => {
-    if (progressRef.current) {
-      gsap.to(progressRef.current, {
-        scaleX: percentage / 100,
-        duration: 0.8,
-        ease: 'power2.out',
-        transformOrigin: 'left',
-      });
-    }
-  }, [percentage]);
+  const completedCount = steps.filter((s) => s.completed).length;
+  const totalCount = steps.length;
+  const percentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
     <div className="progress-section">
+      {/* M3 Label row */}
       <div className="progress-header">
         <h2>Cooking Progress</h2>
-        <span className="progress-count">
-          {completedCount} / {totalCount}
-        </span>
+        <span className="progress-count">{completedCount} / {totalCount}</span>
       </div>
 
-      {/* Progress Bar */}
-      <div className="progress-bar-container">
-        <div ref={progressRef} className="progress-bar-fill" style={{ width: `${percentage}%` }} />
-      </div>
-
-      {/* Completion Message */}
-      {completedCount === totalCount && (
+      {/* M3 Linear Progress Indicator */}
+      <div className="progress-bar-container" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100}>
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          style={{ textAlign: 'center', marginTop: '1rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-success)' }}
-        >
-          🎉 Congratulations! Your chicken is ready! 🎉
-        </motion.div>
-      )}
+          className="progress-bar-fill"
+          initial={false}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.5, ease: [0.2, 0, 0, 1] }}
+        />
+      </div>
 
-      {completedCount > 0 && completedCount < totalCount && (
-        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>
-          Keep going! You're {Math.round(percentage)}% done.
-        </p>
-      )}
+      {/* Completion badge */}
+      <AnimatePresence>
+        {completedCount === totalCount && totalCount > 0 && (
+          <motion.p
+            key="done"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            style={{
+              marginTop: '0.625rem',
+              textAlign: 'center',
+              fontFamily: 'Roboto, sans-serif',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: 'var(--md-primary)',
+              letterSpacing: '0.007em',
+            }}
+          >
+            🎉 Your chicken is ready!
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
