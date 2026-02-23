@@ -49,7 +49,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true, // allow install prompt in dev mode too
+        enabled: false, // disable SW in dev to prevent stale cache issues
       },
     }),
   ],
