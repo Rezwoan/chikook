@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { cookingSteps } from '../data/cookingSteps';
 import type { CookingStep } from '../data/cookingSteps';
+import { playChime } from '../utils/alarm';
 
 interface TimerState {
   stepId: number | null;
@@ -63,6 +64,13 @@ export const useCookingStore = create<CookingStore>()(
       },
 
       toggleStep: (stepId: number) => {
+        // Side-effect: play chime when marking complete (outside set() for cleanliness)
+        const currentState = useCookingStore.getState();
+        const targetStep = currentState.steps.find((s) => s.id === stepId);
+        if (targetStep && !targetStep.completed && currentState.canCompleteStep(stepId)) {
+          playChime();
+        }
+
         set((state) => {
           if (!state.canCompleteStep(stepId)) return state;
 

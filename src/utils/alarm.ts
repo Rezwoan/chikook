@@ -45,6 +45,38 @@ export const startAlarm = () => {
   }
 };
 
+/**
+ * Play a satisfying chime when a cooking step is checked off.
+ * Two ascending sine tones (C5 → E5) with soft bell-like decay.
+ */
+export const playChime = () => {
+  if (localStorage.getItem('sound-enabled') === 'false') return;
+  try {
+    const ctx = new AudioContext();
+    const playTone = (freq: number, startTime: number, duration: number, gain: number) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const t = ctx.currentTime;
+    // C5 (523 Hz) then E5 (659 Hz) — pleasant ascending major-third chime
+    playTone(523.25, t,        0.55, 0.28);
+    playTone(659.25, t + 0.12, 0.6,  0.22);
+    playTone(783.99, t + 0.24, 0.7,  0.16); // G5 for a full major chord bloom
+    setTimeout(() => ctx.close().catch(() => {}), 1200);
+  } catch (e) {
+    // Web Audio not available, silently skip
+  }
+};
+
 export const stopAlarm = () => {
   if (alarmIntervalId !== null) {
     clearInterval(alarmIntervalId);

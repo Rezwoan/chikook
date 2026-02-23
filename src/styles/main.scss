@@ -790,6 +790,7 @@ body {
         transform: translateY(-50%);
         transition: left var(--md-duration-medium1) var(--md-motion-standard),
                     width var(--md-duration-short4) var(--md-motion-standard),
+                    height var(--md-duration-short4) var(--md-motion-standard),
                     background var(--md-duration-short4) var(--md-motion-standard);
       }
 
@@ -799,6 +800,7 @@ body {
 
         &::before {
           width: 24px;
+          height: 24px;
           left: calc(100% - 28px);
           background: var(--md-on-primary);
         }
