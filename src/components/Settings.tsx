@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Download, Bell, BellOff, RotateCcw, Check, Sun, Moon } from 'lucide-react';
+import { X, Volume2, VolumeX, Download, Bell, BellOff, RotateCcw, Check, Sun, Moon, BookOpen } from 'lucide-react';
 import { useCookingStore } from '../store/cookingStore';
 import { useTimerNotification } from '../hooks/useTimerNotification';
 import type { Theme } from '../hooks/useTheme';
@@ -10,9 +10,10 @@ interface SettingsProps {
   onClose: () => void;
   theme: Theme;
   onToggleTheme: () => void;
+  onGoToLibrary: () => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, theme, onToggleTheme }) => {
+const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, theme, onToggleTheme, onGoToLibrary }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -62,6 +63,19 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, theme, onToggleThe
         <h2>Settings</h2>
         <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="close-btn" aria-label="Close settings">
           <X />
+        </motion.button>
+      </div>
+
+      {/* ── Recipes ── */}
+      <div className="settings-section">
+        <div className="section-header">
+          <BookOpen />
+          <h3>Recipes</h3>
+        </div>
+        <p className="section-description">Manage your saved recipes or import new ones</p>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onGoToLibrary} className="action-btn">
+          <BookOpen style={{ width: 16, height: 16 }} />
+          <span>Open Recipe Library</span>
         </motion.button>
       </div>
 

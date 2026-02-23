@@ -92,7 +92,7 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
 
           {/* Emoji Icon */}
           <span className="step-icon" role="img" aria-label={step.iconType}>
-            {iconMap[step.iconType] ?? '👨‍🍳'}
+            {iconMap[step.iconType] ?? step.iconType ?? '👨‍🍳'}
           </span>
 
           {/* M3 Suggestion chip — timer duration */}

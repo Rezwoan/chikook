@@ -2,7 +2,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { cookingSteps } from '../data/cookingSteps';
 import type { CookingStep } from '../data/cookingSteps';
+import type { RecipeStep } from '../data/recipes';
 import { playChime } from '../utils/alarm';
+
+// Helper: convert RecipeStep[] → CookingStep[] with completed = false
+function toCookingSteps(steps: RecipeStep[]): CookingStep[] {
+  return steps.map((s) => ({
+    id: s.id,
+    description: s.description,
+    iconType: s.emoji,
+    timerDuration: s.timerDuration,
+    completed: false,
+  }));
+}
 
 interface TimerState {
   stepId: number | null;
@@ -15,10 +27,12 @@ interface TimerState {
 
 interface CookingStore {
   steps: CookingStep[];
+  sourceSteps: CookingStep[]; // original uncompleted steps — used for reset
   timer: TimerState;
   currentStepIndex: number;
-  
+
   // Actions
+  loadRecipe: (steps: RecipeStep[]) => void;
   toggleStep: (stepId: number) => void;
   /** Called by useTimer when countdown hits 0 — starts alarm, waits for user to dismiss */
   triggerAlarm: () => void;
@@ -38,6 +52,7 @@ export const useCookingStore = create<CookingStore>()(
   persist(
     (set) => ({
       steps: cookingSteps,
+      sourceSteps: cookingSteps.map((s) => ({ ...s, completed: false })),
       currentStepIndex: 0,
       timer: {
         stepId: null,
@@ -46,6 +61,16 @@ export const useCookingStore = create<CookingStore>()(
         isAlarming: false,
         startTime: null,
         duration: 0,
+      },
+
+      loadRecipe: (steps: RecipeStep[]) => {
+        const converted = toCookingSteps(steps);
+        set({
+          steps: converted,
+          sourceSteps: converted,
+          currentStepIndex: 0,
+          timer: { stepId: null, remainingTime: 0, isRunning: false, isAlarming: false, startTime: null, duration: 0 },
+        });
       },
 
       canCompleteStep: (stepId: number) => {
@@ -224,8 +249,8 @@ export const useCookingStore = create<CookingStore>()(
       },
 
       resetAllSteps: () => {
-        set({
-          steps: cookingSteps.map((step) => ({ ...step, completed: false })),
+        set((state) => ({
+          steps: state.sourceSteps.map((step) => ({ ...step, completed: false })),
           currentStepIndex: 0,
           timer: {
             stepId: null,
@@ -235,7 +260,7 @@ export const useCookingStore = create<CookingStore>()(
             startTime: null,
             duration: 0,
           },
-        });
+        }));
       },
 
       setTimerRunning: (isRunning: boolean) => {
@@ -252,6 +277,7 @@ export const useCookingStore = create<CookingStore>()(
       name: 'cooking-storage',
       partialize: (state) => ({
         steps: state.steps,
+        sourceSteps: state.sourceSteps,
         currentStepIndex: state.currentStepIndex,
         timer: state.timer,
       }),
