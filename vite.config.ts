@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const base = process.env.GITHUB_PAGES === 'true' ? '/chikook/' : '/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -16,8 +19,8 @@ export default defineConfig({
         theme_color: '#3d3329',
         background_color: '#1f1a14',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: base,
+        start_url: base,
         orientation: 'portrait',
         icons: [
           {
