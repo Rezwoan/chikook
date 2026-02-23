@@ -11,8 +11,9 @@ interface RecipeLibraryProps {
 }
 
 const RecipeLibrary: React.FC<RecipeLibraryProps> = ({ onStartCooking }) => {
-  const { recipes, deleteRecipe, setActiveRecipe } = useRecipeStore();
+  const { recipes, deleteRecipe, setActiveRecipe, activeRecipeId } = useRecipeStore();
   const loadRecipe = useCookingStore((state) => state.loadRecipe);
+  const cookingSteps = useCookingStore((state) => state.steps);
   const [showImport, setShowImport] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -35,6 +36,7 @@ const RecipeLibrary: React.FC<RecipeLibraryProps> = ({ onStartCooking }) => {
 
   const totalSteps = (r: Recipe) => r.steps.length;
   const timerSteps = (r: Recipe) => r.steps.filter((s) => s.timerDuration && s.timerDuration > 0).length;
+  const cookTimeMins = (r: Recipe) => Math.round(r.steps.reduce((a, s) => a + (s.timerDuration ?? 0), 0) / 60);
 
   return (
     <div className="recipe-library">
@@ -121,7 +123,28 @@ const RecipeLibrary: React.FC<RecipeLibraryProps> = ({ onStartCooking }) => {
                       {timerSteps(recipe)} timer{timerSteps(recipe) !== 1 ? 's' : ''}
                     </span>
                   )}
+                  {cookTimeMins(recipe) > 0 && (
+                    <span className="recipe-meta-pill">
+                      <span className="meta-dot time-dot" />
+                      ~{cookTimeMins(recipe)}m
+                    </span>
+                  )}
                 </div>
+
+                {/* Active recipe progress */}
+                {activeRecipeId === recipe.id && cookingSteps.length > 0 && (() => {
+                  const done = cookingSteps.filter(s => s.completed).length;
+                  const total = cookingSteps.length;
+                  const pct = Math.round((done / total) * 100);
+                  return (
+                    <div className="recipe-card-progress-wrap">
+                      <div className="recipe-card-progress">
+                        <div className="recipe-card-progress-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="recipe-progress-label">{done}/{total} steps done</span>
+                    </div>
+                  );
+                })()}
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -129,7 +152,10 @@ const RecipeLibrary: React.FC<RecipeLibraryProps> = ({ onStartCooking }) => {
                   onClick={() => handleCook(recipe)}
                 >
                   <Play size={18} fill="currentColor" />
-                  <span>Start Cooking</span>
+                  {activeRecipeId === recipe.id && cookingSteps.some(s => s.completed)
+                    ? <span>Resume</span>
+                    : <span>Start Cooking</span>
+                  }
                 </motion.button>
               </motion.div>
             ))
@@ -140,7 +166,10 @@ const RecipeLibrary: React.FC<RecipeLibraryProps> = ({ onStartCooking }) => {
       {/* Import Modal */}
       <AnimatePresence>
         {showImport && (
-          <RecipeImport onClose={() => setShowImport(false)} />
+          <RecipeImport
+            onClose={() => setShowImport(false)}
+            onImported={(recipe) => handleCook(recipe)}
+          />
         )}
       </AnimatePresence>
     </div>

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, CheckCircle, AlertCircle, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Upload, ChevronDown, ChevronUp, Copy, ChefHat } from 'lucide-react';
 import { useRecipeStore } from '../store/recipeStore';
 import type { Recipe, RecipeStep } from '../data/recipes';
 import { EXAMPLE_RECIPE_JSON } from '../data/recipes';
 
 interface RecipeImportProps {
   onClose: () => void;
+  onImported?: (recipe: Recipe) => void;
 }
 
 type ParseStatus = 'idle' | 'valid' | 'error';
@@ -56,13 +57,39 @@ function validateRecipe(raw: unknown): { ok: true; recipe: Recipe } | { ok: fals
 }
 
 // ── Component ─────────────────────────────────────────────
-const RecipeImport: React.FC<RecipeImportProps> = ({ onClose }) => {
+const RecipeImport: React.FC<RecipeImportProps> = ({ onClose, onImported }) => {
   const { importRecipe, recipes } = useRecipeStore();
   const [json, setJson] = useState('');
   const [status, setStatus] = useState<ParseStatus>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [preview, setPreview] = useState<Recipe | null>(null);
   const [showExample, setShowExample] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Auto-validate on paste with 600 ms debounce
+  useEffect(() => {
+    if (!json.trim()) { setStatus('idle'); setPreview(null); setErrorMsg(''); return; }
+    const id = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(json);
+        const result = validateRecipe(parsed);
+        if (result.ok) {
+          setStatus('valid');
+          setPreview(result.recipe);
+          setErrorMsg('');
+        } else {
+          setStatus('error');
+          setErrorMsg(result.error);
+          setPreview(null);
+        }
+      } catch {
+        setStatus('error');
+        setErrorMsg('Invalid JSON — check for missing commas, brackets, or quotes.');
+        setPreview(null);
+      }
+    }, 600);
+    return () => clearTimeout(id);
+  }, [json]);
 
   const handleParse = () => {
     try {
@@ -136,8 +163,21 @@ const RecipeImport: React.FC<RecipeImportProps> = ({ onClose }) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
           >
-            <div className="example-label">
-              Example — copy &amp; modify to write your own recipe:
+            <div className="example-label-row">
+              <span className="example-label">Example — copy &amp; modify to write your own recipe:</span>
+              <motion.button
+                className="copy-example-btn"
+                whileTap={{ scale: 0.88 }}
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(EXAMPLE_RECIPE_JSON);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </motion.button>
             </div>
             <pre className="example-json">{EXAMPLE_RECIPE_JSON}</pre>
             <div className="example-fields">
@@ -206,18 +246,42 @@ const RecipeImport: React.FC<RecipeImportProps> = ({ onClose }) => {
 
         {/* Action buttons */}
         <div className="import-actions">
-          <motion.button whileTap={{ scale: 0.95 }} className="import-parse-btn" onClick={handleParse} disabled={!json.trim()}>
-            Validate JSON
-          </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="import-save-btn"
+            className="import-save-btn secondary"
             onClick={handleImport}
             disabled={status !== 'valid' || !preview}
           >
             <Upload size={16} />
             {idConflict ? 'Update Recipe' : 'Save Recipe'}
           </motion.button>
+          {onImported && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="import-save-btn"
+              onClick={() => {
+                if (!preview) return;
+                importRecipe(preview);
+                onImported(preview);
+                onClose();
+              }}
+              disabled={status !== 'valid' || !preview}
+            >
+              <ChefHat size={16} />
+              {idConflict ? 'Update & Cook' : 'Save & Start Cooking'}
+            </motion.button>
+          )}
+          {!onImported && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="import-save-btn"
+              onClick={handleImport}
+              disabled={status !== 'valid' || !preview}
+            >
+              <Upload size={16} />
+              {idConflict ? 'Update Recipe' : 'Save Recipe'}
+            </motion.button>
+          )}
         </div>
       </motion.div>
     </motion.div>

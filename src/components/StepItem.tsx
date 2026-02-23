@@ -95,8 +95,8 @@ const StepItem: React.FC<StepItemProps> = ({ step, index }) => {
             {iconMap[step.iconType] ?? step.iconType ?? '👨‍🍳'}
           </span>
 
-          {/* M3 Suggestion chip — timer duration */}
-          {step.timerDuration && !step.completed && (
+          {/* M3 Suggestion chip — timer duration (hidden when timer is actively displayed inline) */}
+          {step.timerDuration && !step.completed && !isActiveTimer && (
             <div className="timer-badge">
               <Clock style={{ width: 11, height: 11 }} />
               <span>{Math.floor(step.timerDuration / 60)}m</span>

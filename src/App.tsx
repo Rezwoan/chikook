@@ -18,6 +18,7 @@ type AppView = 'library' | 'cooking';
 function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [view, setView] = useState<AppView>('library');
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const { activeRecipeId, getActiveRecipe, clearActiveRecipe } = useRecipeStore();
   const { permission, requestPermission, isSupported } = useTimerNotification();
@@ -40,11 +41,12 @@ function App() {
 
   const handleStartCooking = () => setView('cooking');
 
-  const handleBackToLibrary = () => {
-    if (confirm('Stop cooking and go back to recipes? Your current progress will be saved.')) {
-      clearActiveRecipe();
-      setView('library');
-    }
+  const handleBackToLibrary = () => setShowBackConfirm(true);
+
+  const confirmGoBack = () => {
+    setShowBackConfirm(false);
+    clearActiveRecipe();
+    setView('library');
   };
 
   const activeRecipe = getActiveRecipe();
@@ -128,13 +130,55 @@ function App() {
                   </motion.button>
                 </div>
               </div>
-              <ProgressBar />
+              <ProgressBar onGoToLibrary={confirmGoBack} />
             </header>
             <main>
               <div>
                 <StepList />
               </div>
             </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Back-to-library confirm dialog */}
+      <AnimatePresence>
+        {showBackConfirm && (
+          <motion.div
+            key="back-confirm"
+            className="confirm-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowBackConfirm(false)}
+          >
+            <motion.div
+              className="confirm-dialog"
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="confirm-title">Leave cooking?</p>
+              <p className="confirm-body">Your progress is saved — you can resume any time.</p>
+              <div className="confirm-actions">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  className="confirm-btn cancel"
+                  onClick={() => setShowBackConfirm(false)}
+                >
+                  Keep Cooking
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  className="confirm-btn danger"
+                  onClick={confirmGoBack}
+                >
+                  Go Back
+                </motion.button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
